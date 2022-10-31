@@ -28,7 +28,7 @@
     "i18next": "21.9.2",
     "localforage": "1.10.0",
     "mermaid": "^9.1.7",
-    "mynick-link-core": "^1.0.0-2",
+    "mynick-link-core": "1.0.0-3",
     "os-browserify": "0.3.0",
     "postcss": "8.4.17",
     "react": "18.2.0",

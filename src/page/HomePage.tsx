@@ -4,7 +4,7 @@ import Markdown from "../view/Markdown";
 function HomePage() {
   return <div className="container mx-auto max-w-xs sm:max-w-7xl sm:p-4">
     <Card>
-      <Markdown src="https://gist.githubusercontent.com/0x50Fc/4f4746a4263a78fb7ac65e57004c0d47/raw/README.md"></Markdown>
+      <Markdown src="https://gist.githubusercontent.com/0x50Fc/cf1d0b3c25525c8d66325f2bd0548c7b/raw/README.md"></Markdown>
     </Card>
   </div>
 }

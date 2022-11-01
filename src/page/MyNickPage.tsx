@@ -3,13 +3,14 @@ import { useTranslation } from "../i18n";
 import useWallet from '../use/useWallet';
 import { setWalletChooses } from '../use/useWalletChooses';
 import useWalletReady from '../use/useWalletReady';
-import { setNick as setMyNick, getNick as getMyNick, getFee as getNickFee } from 'mynick-link-core/dist/mynick';
-import { TX } from 'gudao-co-core/dist/progress';
-import { getErrmsg } from 'gudao-co-core/dist/error';
+import { setNick as setMyNick, getNick as getMyNick, canSetNick } from 'mynick-link-core/dist/mynick';
+import { TX } from 'mynick-link-core/dist/progress';
+import { getErrmsg } from 'mynick-link-core/dist/error';
 import { useState } from 'react';
-import { HiInformationCircle } from 'react-icons/hi';
+import { HiBadgeCheck, HiExclamation, HiInformationCircle } from 'react-icons/hi';
 import { TiTick } from 'react-icons/ti';
 import { CurrencyValue } from 'mynick-link-core/dist/currency';
+import { useNavigate } from 'react-router-dom';
 
 function MyNickPage() {
   const { t } = useTranslation()
@@ -24,6 +25,10 @@ function MyNickPage() {
   const [success, setSuccess] = useState(false)
   const [loadingNick, setLoadingNick] = useState(false)
   const [fee, setFee] = useState<CurrencyValue>()
+  const [loadingInput, setLoadingInput] = useState(false)
+  const [inputErrmsg, setInputErrmsg] = useState('')
+  const [addr, setAddr] = useState('')
+  const navigate = useNavigate()
 
   if (!isReady) {
     return (<></>)
@@ -34,7 +39,22 @@ function MyNickPage() {
     return (<></>)
   }
 
-  if (!loadingNick && currNick === undefined) {
+  let _addr = addr
+  let _currNick = currNick
+
+  if (addr === '') {
+    _addr = wallet.addr
+    setAddr(wallet.addr)
+  } else if (_addr !== wallet.addr) {
+    _addr = wallet.addr
+    setAddr(wallet.addr)
+    if (currNick !== undefined) {
+      setCurrNick(undefined)
+      _currNick = undefined
+    }
+  }
+
+  if (!loadingNick && _currNick === undefined) {
     setLoadingNick(true)
     getMyNick(wallet.addr).then((rs) => {
       setLoadingNick(false)
@@ -71,20 +91,53 @@ function MyNickPage() {
   };
 
   let _nick = nick;
+  let _tv: any = undefined;
+
+  const startLoadingInput = () => {
+    if (_tv) {
+      clearTimeout(_tv)
+      _tv = undefined
+    }
+    if (_nick.toLocaleLowerCase() === currNick?.toLocaleLowerCase()) {
+      setFee(undefined)
+      setInputErrmsg('')
+      setLoadingInput(false)
+    } else if (_nick) {
+      setFee(undefined)
+      setLoadingInput(true)
+      let v = _nick
+      _tv = setTimeout(() => {
+        if (v === _nick) {
+          if (_tv) {
+            clearTimeout(_tv)
+            _tv = undefined
+          }
+          canSetNick(v).then((rs) => {
+            if (v === _nick) {
+              setLoadingInput(false)
+              setInputErrmsg('')
+              setFee(rs)
+            }
+          }, (reason) => {
+            if (v === _nick) {
+              setLoadingInput(false)
+              setInputErrmsg(getErrmsg(reason))
+            }
+          })
+        }
+      }, 600)
+    } else {
+      setFee(undefined)
+      setInputErrmsg('')
+      setLoadingInput(false)
+    }
+  };
 
   const setInputNick = (v: string) => {
-    if (v.toLocaleLowerCase() === currNick?.toLocaleLowerCase()) {
-      setFee(undefined)
-    } else if (v.trim()) {
-      getNickFee(v).then((rs) => {
-        debugger
-        if (_nick === v) {
-          setFee(rs)
-        }
-      })
-    }
-    setNick(v)
-    _nick = v
+    let vv = v.replace(/[\u3000 \r\n\t\f]/g,'')
+    setNick(vv)
+    _nick = vv
+    startLoadingInput();
   };
 
   let failureAlert = <></>
@@ -147,12 +200,41 @@ function MyNickPage() {
       </div>
   }
 
+  let inputStateView = <></>
+
+  if (currNick !== undefined && _nick.toLocaleLowerCase() !== currNick.toLocaleLowerCase()) {
+    if (loadingInput) {
+      inputStateView = <Spinner size='sm' color='success'></Spinner>
+    } else if (inputErrmsg) {
+      inputStateView = <span className='flex flex-row items-center gap-2'>
+        <HiExclamation></HiExclamation>
+        <span>{inputErrmsg}</span>
+      </span>
+    } else {
+      inputStateView = <span className='flex flex-row items-center gap-2 text-sm'>
+        <HiBadgeCheck></HiBadgeCheck>
+        <span>Availabled</span>
+      </span>
+    }
+  }
+
+  let sellButton = <></>
+
+  if (currNick !== undefined && currNick !== '') {
+    sellButton = <Button
+      onClick={() => navigate('/sell')}
+    >
+      {t('Sell')}
+    </Button>
+  }
+
   return (
     <div className="container mx-auto max-w-xs sm:max-w-xl sm:p-4">
       <div className='flex justify-end pt-4 align-middle'>
         <div className='truncate font-medium text-3xl text-gray-900 dark:text-white flex-1 flex flex-row items-center'>
           {t('My Nick')}
         </div>
+        {sellButton}
       </div>
       {failureAlert}
       {infoAlert}
@@ -187,6 +269,7 @@ function MyNickPage() {
                 onChange={(e) => setInputNick(e.currentTarget.value)}
                 placeholder=""
                 readOnly={loadingNick || loading}
+                helperText={inputStateView}
               />
             </div>
             <div>
@@ -204,7 +287,7 @@ function MyNickPage() {
                 addon={fee ? fee.currency.symbol : 'USDT'}
               />
             </div>
-            <Button type="submit" disabled={loading||nick === currNick}>
+            <Button type="submit" disabled={loading || nick === currNick || loadingNick || loadingInput || inputErrmsg !== ''}>
               {loadingSpinner(true)}
               {t(loading ? progress : 'Submit')}
             </Button>

@@ -18,6 +18,7 @@ import MyNickPage from './page/MyNickPage';
 import DevPage from './page/DevPage';
 import NickPage from './page/NickPage';
 import AddressPage from './page/AddressPage';
+import SellPage from './page/SellPage';
 
 function App() {
   const { t } = useTranslation()
@@ -139,6 +140,7 @@ function App() {
           <Route path="/" element={<HomePage></HomePage>}></Route>
           <Route path="/mynick" element={<MyNickPage></MyNickPage>}> </Route>
           <Route path="/dev" element={<DevPage></DevPage>}></Route>
+          <Route path="/sell" element={<SellPage></SellPage>}> </Route>
           <Route path="/nick/:nick" element={<NickPage></NickPage>}></Route>
           <Route path="/address/:addr" element={<AddressPage></AddressPage>}></Route>
         </Routes>

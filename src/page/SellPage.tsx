@@ -196,12 +196,12 @@ function SellPage() {
                         <div>
                             <div className="mb-2 block">
                                 <Label
-                                    htmlFor="fee"
-                                    value="Fee"
+                                    htmlFor="amount"
+                                    value="Sell Amount"
                                 />
                             </div>
                             <TextInput
-                                id="fee"
+                                id="amount"
                                 type="number"
                                 inputMode='numeric'
                                 value={inputAmount}
